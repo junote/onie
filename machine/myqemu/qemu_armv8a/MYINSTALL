@@ -1,0 +1,101 @@
+make MACHINEROOT=../machine/myqemu MACHINE=qemu_armv8a u-boot
+make -j8 MACHINEROOT=../machine/myqemu MACHINE=qemu_armv8a kernel
+cd ../build/download
+sha1sum u-boot-2021.01.tar.bz2 > ../../upstream/u-boot-2021.01.tar.bz2.sha1
+sha1sum linux-5.4.131.tar.xz >../../upstream/linux-5.4.131.tar.xz.sha1
+
+//patch
+cd ../patches/u-boot
+mkdir 2021.01
+cd 2021.01
+cp ../2018.03/* .
+vi series
+
+cd ../kernel
+mkdir 5.4.131
+touch 5.4.131/series
+
+cd build-config/conf/kernel 
+mkdir 5.4.131
+touch 5.4.131/linux.armv8a.config
+
+
+dd if=/dev/zero of=flash0.img bs=1M count=64
+dd if=qemu_armv8a-r0.u-boot of=flash0.img bs=1M seek=0 conv=notrunc
+
+dd if=/dev/zero of=flash1.img bs=1M count=64
+dd if=qemu_armv8a-r0.itb of=flash1.img bs=1M seek=0 conv=notrunc
+
+dd if=/dev/zero of=flash1.img bs=1M count=64
+dd if=qemu_armv8a-r0.vmlinuz of=flash1.img bs=1M seek=0 count=16 conv=notrunc
+dd if=virt.dtb of=flash1.img bs=1M seek=16 conv=notrunc
+
+https://u-boot.readthedocs.io/en/v2021.04/board/emulation/qemu-arm.html
+qemu-system-aarch64 -nographic -machine virt -cpu cortex-a57 -smp 2 -m 1024 -bios qemu_armv8a-r0.u-boot
+
+qemu-system-aarch64 -nographic -machine virt -cpu cortex-a57 -smp 2 -m 1024  -kernel qemu_armv8a-r0.vmlinuz
+
+
+
+ mtd read nor0 60000000 2000000 1000000
+ bootm 60000000
+
+qemu-system-aarch64 -nographic -machine virt -cpu cortex-a57 -smp 2 -m 1024 \
+    -drive if=pflash,format=raw,file=flash0.img \
+    -drive if=pflash,format=raw,file=flash1.img \
+    -netdev user,id=net0 -device e1000,netdev=net0
+
+
+setenv bootargs ‘root=/dev/ram0 console=ttyAMA0 earlycon’
+
+qemu-system-aarch64  -M virt -m 4096 \
+    -smp 2 -bios u-boot.bin \
+    -no-reboot  \
+    -drive if=pflash,file=flash1.img,format=raw,unit=1 \
+    -nographic -cpu cortex-a57 -serial mon:stdio \
+    -machine virt,gic_version=3 -machine type=virt,virtualization=true -d guest_errors -nodefaults 
+
+//gen dts
+qemu-system-aarch64 -nographic -machine virt,dumpdtb=virt.dtb -cpu cortex-a57 -smp 2 -m 1024
+dtc -I dtb -O dts virt.dtb >virt.dts
+$ cp virt.dts ~/myonie/onie/build/qemu_armv8a-r0/kernel/linux-4.19.19/arch/arm64/boot/dts/arm/qemu_armv8a.dtb
+
+
+qemu-system-aarch64 -nographic -machine virt,dumpdtb=virt.dtb -cpu cortex-a57 -smp 2 -m 4096 \
+    -drive if=pflash,format=raw,file=flash.img \
+    -drive if=pflash,format=raw,file=flash1.img \
+    -netdev user,id=net0 -device e1000,netdev=net0
+
+https://github.com/ARM-software/arm-trusted-firmware/archive/refs/tags/v2.4.tar.gz
+https://github.com/ARM-software/arm-trusted-firmware/archive/refs/tags/v2.5.tar.gz
+
+
+
+qemu-system-aarch64 -M virt \
+ -cpu cortex-a57 -nographic -smp 4 -m 512 \
+ -kernel qemu_armv8a-r0.vmlinuz \
+ -append "root=/dev/ram0 console=ttyAMA0 kmemleak=on loglevel=8" 
+
+setenv bootargs 'root=/dev/ram0 console=ttyAMA0'
+
+qemu-system-aarch64  -M virt -m 256M \
+    -net nic,model=virtio -net tap -device virtio-net-device,netdev=net0,mac=f0:47:7c:bc:f7:26 \
+    -netdev tap,id=net0 \
+    -smp 2 -bios /labs/linux-lab/boards/aarch64/virt/bsp/uboot/v2019.10/v5.1/u-boot.bin \
+    -no-reboot  \
+    -device loader,file=tftpboot/env.img,addr=0x49000000 \
+    -drive if=pflash,file=tftpboot/pflash.img,format=raw,unit=1 \
+    -drive if=none,file=/labs/linux-lab/boards/aarch64/virt/bsp/root/2019.11.1/rootfs.ext2,format=raw,id=virtio-vda \
+    -device virtio-blk-device,drive=virtio-vda \
+    -nographic -cpu cortex-a57 -serial mon:stdio \
+    -machine virt,gic_version=3 -machine type=virt,virtualization=true -d guest_errors -nodefaults 
+
+
+qemu-system-aarch64 -machine virt -m 1024M -cpu cortex-a57 -serial stdio \
+    -drive if=none,file=onie-aarch64-demo.img,id=hd0 \
+    -device virtio-blk-device,drive=hd0 \
+    -cdrom onie-recovery-arm64-qemu_armv8a-r0.iso \
+    -pflash flash0.img -pflash flash1.img
+
+qemu-system-aarch64 -machine virt -m 1024M -cpu cortex-a57 -serial stdio \
+    -pflash flash0.img -pflash flash1.img

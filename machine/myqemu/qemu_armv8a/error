@@ -1,0 +1,37 @@
+Makefile:632: include/config/auto.conf: No such file or directory
+Makefile:678: include/config/auto.conf.cmd: No such file or directory
+
+
+export ARCH=arm64
+
+export CROSS_COMPILE=aarch64-linux-gnu-
+
+'/home/jcai/myonie/onie/build/qemu_armv8a-r0/kernel/linux/arch/arm64/boot/Image.gz' -> '/home/jcai/myonie/onie/build/images/qemu_armv8a-r0.vmlinuz'
+make[1]: Entering directory '/home/jcai/myonie/onie/build/qemu_armv8a-r0/kernel/linux-4.19.19'
+make[1]: Leaving directory '/home/jcai/myonie/onie/build/qemu_armv8a-r0/kernel/linux-4.19.19'
+==== Copy device tree blob to /home/jcai/myonie/onie/build/images ====
+'/home/jcai/myonie/onie/build/qemu_armv8a-r0/kernel/linux/arch/arm64/boot/dts/arm/qemu_armv8a.dtb' -> '/home/jcai/myonie/onie/build/images/qemu_armv8a-r0.dtb'
+
+
+qemu-system-aarch64 -nographic -machine virt -cpu cortex-a57 -smp 2 -m 1024 \
+    -drive if=pflash,format=raw,file=flash0.img \
+    -drive if=pflash,format=raw,file=flash1.img \
+    -netdev user,id=net0 -device e1000,netdev=net0 \
+    -device loader,file=Image,addr=0x60000000 \
+    -device loader,file=sysroot.cpio,addr=0x64000000 \
+    -device loader,file=qemu_armv8a-r0.dtb,addr=0x68000000 
+
+
+    booti 60000000 64000000 68000000
+
+
+qemu-system-aarch64 -nographic -machine virt -cpu cortex-a57 -smp 2 -m 1024 \
+    -drive if=pflash,format=raw,file=flash0.img \
+    -drive if=pflash,format=raw,file=flash1.img \
+    -netdev user,id=net0 -device e1000,netdev=net0 \
+    -device loader,file=qemu_armv8a-r0.itb,addr=0x60000000 
+
+
+
+ qemu-system-aarch64 -m <memory size> -M virt -drive if=none,file=<hard drive file name>,id=hd0 \
+   -device virtio-blk-device,drive=hd0 -netdev type=tap,id=net0 -device virtio-net-device,netdev=net0
