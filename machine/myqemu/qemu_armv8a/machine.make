@@ -7,7 +7,7 @@
 
 
 ONIE_ARCH ?= armv8a
-SWITCH_ASIC_VENDOR = qemu
+SWITCH_ASIC_VENDOR = none
 
 VENDOR_REV ?= 0
 
@@ -32,8 +32,8 @@ UBOOT_VERSION = 2021.01
 
 
 
-KERNEL_DTB = arm/qemu_armv8a.dtb
-KERNEL_DTB_PATH = dts/$(KERNEL_DTB)
+ KERNEL_DTB = arm/qemu_armv8a.dtb
+ KERNEL_DTB_PATH = dts/$(KERNEL_DTB)
 
 # XTOOLS_ENABLE = yes
 
@@ -66,9 +66,10 @@ KERNEL_DTB_PATH = dts/$(KERNEL_DTB)
 #LINUX_MINOR_VERSION = 131
 LINUX_VERSION = 4.19
 LINUX_MINOR_VERSION = 19
-KERNEL_LOAD_ADDRESS = 0x60000000
-KERNEL_ENTRY_POINT  = 0x60000000
-FDT_LOAD_ADDRESS    = 0x58000000 
+# KERNEL_LOAD_ADDRESS = 0x60000000
+# KERNEL_ENTRY_POINT  = 0x60000000
+KERNEL_LOAD_ADDRESS = 0x40080000
+KERNEL_ENTRY_POINT  = 0x40080000
 
 # The VENDOR_VERSION string is appended to the overal ONIE version
 # string.  HW vendors can use this to appended their own versioning
@@ -78,7 +79,7 @@ FDT_LOAD_ADDRESS    = 0x58000000
 # Vendor ID -- IANA Private Enterprise Number:
 # http://www.iana.org/assignments/enterprise-numbers
 # Open Compute Project IANA number
-VENDOR_ID = 42623
+VENDOR_ID = 99999
 
 #-------------------------------------------------------------------------------
 #

@@ -1,1 +1,4 @@
 add_qemu_armv8a_dts.patch
+add_flash_partition.patch
+add_flash_partition2.patch
+

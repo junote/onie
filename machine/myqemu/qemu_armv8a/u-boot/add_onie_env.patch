@@ -1,0 +1,64 @@
+diff --git a/configs/qemu_arm64_defconfig b/configs/qemu_arm64_defconfig
+index 826edf33..068f26fe 100644
+--- a/configs/qemu_arm64_defconfig
++++ b/configs/qemu_arm64_defconfig
+@@ -2,7 +2,7 @@ CONFIG_ARM=y
+ CONFIG_POSITION_INDEPENDENT=y
+ CONFIG_ARCH_QEMU=y
+ CONFIG_NR_DRAM_BANKS=1
+-CONFIG_ENV_SIZE=0x40000
++CONFIG_ENV_SIZE=0x100000
+ CONFIG_ENV_SECT_SIZE=0x40000
+ CONFIG_AHCI=y
+ CONFIG_DISTRO_DEFAULTS=y
+diff --git a/include/configs/common_config.h b/include/configs/common_config.h
+index 60c77a7c..8713a584 100644
+--- a/include/configs/common_config.h
++++ b/include/configs/common_config.h
+@@ -139,7 +139,7 @@
+ #define CONFIG_SYS_BAUDRATE_TABLE	\
+ 	{300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 115200}
+ 
+-#define CONFIG_ENV_SIZE		0x2000
++#define CONFIG_ENV_SIZE		0x100000
+ 
+ /* Allow vendor environment vars to be overwritten, like ethaddr. */
+ #define CONFIG_ENV_OVERWRITE
+diff --git a/include/configs/onie_common_config.h b/include/configs/onie_common_config.h
+index c941e2a0..d9dfc4fe 100644
+--- a/include/configs/onie_common_config.h
++++ b/include/configs/onie_common_config.h
+@@ -57,10 +57,11 @@
+  */
+ #define CONFIG_ONIE_BOOT_ARGS \
+ 	"onie_initargs=setenv bootargs quiet console=$consoledev,$baudrate\0" \
+-	"onie_platformargs=setenv bootargs $bootargs serial_num=${serial#} " \
++	"onie_platformargs=setenv bootargs $bootargs serial_num=${serial#}\0" \
++	"onie_mtdparts=setenv bootargs $bootargs mtdparts=${mtdparts} " \
+ 	"eth_addr=$ethaddr " \
+ 	"$onie_bootargs $onie_debugargs \0" \
+-	"onie_args=run onie_initargs onie_platformargs\0"
++	"onie_args=run onie_initargs onie_platformargs onie_mtdparts\0"
+ 
+ /*
+  * Check for one time boot commands
+diff --git a/include/configs/qemu-arm.h b/include/configs/qemu-arm.h
+index a2f83bdb..50ecd7dd 100644
+--- a/include/configs/qemu-arm.h
++++ b/include/configs/qemu-arm.h
+@@ -81,7 +81,6 @@
+ #undef CONFIG_CMD_PXE
+ #undef CONFIG_OF_BOARD_SETUP
+ 
+- 
+ 
+ 
+ #define CONFIG_EXTRA_ENV_SETTINGS \
+@@ -89,6 +88,7 @@
+ 	"onie_start=0x001000000\0" \
+ 	"onie_sz.b=0x001000000\0" \
+ 	"loadaddr=0x60000000\0"  \
++	"mtdparts=physmap-flash.0:1m(uboot),1m(uboot-env),1m(board_eeprom),13m(blank),16m(onie)\0"  \
+ 	CONFIG_ONIE_COMMON_UBOOT_ENV
+ 
+ 

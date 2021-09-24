@@ -1,1 +1,2 @@
-change_env_addr.patch
+add_onie_platform.patch
+add_onie_env.patch

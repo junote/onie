@@ -1,0 +1,49 @@
+diff --git a/arch/arm64/boot/dts/arm/qemu_armv8a.dts b/arch/arm64/boot/dts/arm/qemu_armv8a.dts
+index 306531fe..783fa0ce 100644
+--- a/arch/arm64/boot/dts/arm/qemu_armv8a.dts
++++ b/arch/arm64/boot/dts/arm/qemu_armv8a.dts
+@@ -315,8 +315,36 @@
+ 
+ 	flash@0 {
+ 		bank-width = <0x4>;
++        #address-cells = <0x2>;
++        #size-cells = <0x1>;
+ 		reg = <0x0 0x0 0x0 0x4000000 0x0 0x4000000 0x0 0x4000000>;
+ 		compatible = "cfi-flash";
++        partition@0 {
++            /* 1MB u-boot, 4 sectors */
++            reg = <0x00000000 0x00100000>;
++            label = "uboot";
++        };
++        partition@1 {
++            /* 1MB, 4 sector */
++            reg = <0x00100000 0x00040000>;
++            label = "uboot-env";
++            env_size = <0x2000>;
++        };
++        partition@2 {
++            /* 256KB, 1 sector */
++            reg = <0x00200000 0x00040000>;
++            label = "board_eeprom";
++        };
++        partition@3 {
++            /* 256KB, 1 sector */
++            reg = <0x00240000 0x00dc0000>;
++            label = "blank";
++        };
++        partition@4 {
++            /* 16MB onie */
++            reg = <0x01000000 0x01000000>;
++            label = "onie";
++        };
+ 	};
+ 
+ 	cpus {
+@@ -354,6 +382,6 @@
+ 
+ 	chosen {
+ 		stdout-path = "/pl011@9000000";
+-		kaslr-seed = <0x1b5098f1 0x7f90c112>;
++		kaslr-seed = <0xdf23eb21 0x64ec3c8>;
+ 	};
+ };
