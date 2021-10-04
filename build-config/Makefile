@@ -369,6 +369,9 @@ include make/kernel.make
 ifeq ($(UBOOT_ENABLE),yes)
   include make/u-boot.make
 endif
+ifeq ($(ATF_ENABLE),yes)
+  include make/atf.make
+endif
 include make/compiler.make
 include make/busybox.make
 include make/zlib.make

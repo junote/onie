@@ -29,7 +29,7 @@ dd if=/dev/zero of=flash0.img bs=256K count=256
 dd if=qemu_armv8a-r0.u-boot of=flash0.img bs=256K seek=0 conv=notrunc
 dd if=qemu_armv8a-r0.itb of=flash0.img bs=256K seek=64 conv=notrunc
 
-fallocate -l 2G usbdisk.img
+
 
 
 setenv bootargs $bootargs "mtdparts=physmap-flash.0:1m(uboot),1m(uboot-env),1m(mfgeprom),13m(blank),16m(onie)"
@@ -38,8 +38,7 @@ setenv bootargs $bootargs "mtdparts=physmap-flash.0:1m(uboot),1m(uboot-env),1m(m
 mtdparts=physmap-flash.0:1m(uboot),1m(uboot-env),1m(mfgeprom),13m(blank),16m(onie)
 
 qemu-system-aarch64 -nographic -machine virt -cpu cortex-a57 -smp 2 -m 1024 \
-    -drive if=pflash,format=raw,file=flash0.img \
-	-drive if=sd,format=raw,file=sd.img
+    -drive if=pflash,format=raw,file=flash0.img 
 	
 cp 1000000 60000000 1000000
 setenv bootargs ‘root=/dev/ram0,rw console=ttyAMA0 earlycon’
@@ -80,3 +79,60 @@ booti 50000000 60000000 58000000
 
 
 
+//add atf but can't jump to u-boot
+//switch compiler, not work
+//delete all patch, not work
+
+make -j8 MACHINEROOT=../machine/myqemu MACHINE=qemu_armv8a atf
+
+dd if=/dev/zero of=flash0.img bs=256K count=256
+dd if=qemu_armv8a-r0.bl1 of=flash0.img bs=256K conv=notrunc
+dd if=qemu_armv8a-r0.fip of=flash0.img seek=1 bs=256K conv=notrunc
+
+
+qemu-system-aarch64 -nographic -machine virt,secure=on  -cpu cortex-a57 -smp 2 -m 1024 \
+    -drive if=pflash,format=raw,file=flash0.img 
+
+
+
+export ARCH=arm64
+export CROSS_COMPILE=/home/jcai/myonie/onie/build/x-tools/armv8a-g6.3.0-lnx4.19.19-glibc-2.25/install/aarch64-onie-linux-gnueabi/bin/aarch64-onie-linux-gnueabi-
+make qemu_arm64_defconfig
+
+
+
+//add usb and demo , fw_setenv have errors and need to reboot maually
+$ make -j8 MACHINEROOT=../machine/myqemu MACHINE=qemu_armv8a demo
+
+
+dd if=/dev/zero of=flash0.img bs=1M count=64
+dd if=qemu_armv8a-r0.u-boot of=flash0.img bs=1M seek=0 conv=notrunc
+dd if=qemu_armv8a-r0.itb of=flash0.img bs=1M seek=16 conv=notrunc
+
+fallocate -l 2G usbdisk.img
+sudo mkfs.ext4 usbdisk.img
+mkdir sda
+sudo mount usbdisk.img sda
+sudo cp demo-installer-arm64-qemu_armv8a-r0.bin sda
+sudo umount sda
+rm sda -rf
+
+qemu-system-aarch64 -nographic -machine virt -cpu cortex-a57 -smp 2 -m 1024 \
+    -drive if=pflash,format=raw,file=flash0.img \
+	-device usb-ehci \
+    -drive id=my_usb_disk,file=usbdisk.img,if=none,format=raw \
+    -device usb-storage,drive=my_usb_disk \
+	-netdev user,id=net0 -device e1000,netdev=net0
+
+env default -a
+saveenv
+run onie_rescue 
+
+mkdir sda
+mount /dev/sda sda
+cp /sda/demo-installer-arm64-qemu_armv8a-r0.bin .
+umount sda
+rm sda -rf 
+sh demo-installer-arm64-qemu_armv8a-r0.bin
+
+fw_printenv

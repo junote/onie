@@ -21,6 +21,10 @@ endif
 
 UBOOT_MACHINE = qemu_arm64
 
+
+#ATF_ENABLE = yes
+#ATF_MACHINE = qemu
+
 # Include kexec-tools
 KEXEC_ENABLE = yes
 
